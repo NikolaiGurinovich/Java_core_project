@@ -1,12 +1,11 @@
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 
 public class DataReader {
     private static HashMap<String, Integer> currentBillsMap = new HashMap<>();
+
+    private static String billRegex = "^[0-9]{5}-[0-9]{5}$";
     private static String negativeTransactionSumMessage = " ошибка во время перевода, неверная сумма транзакции";
     private static String invalidBillMessage = " ошибка во время перевода, неверный номер счета";
     private static String notEnoughMoneyMessage = " ошибка во время перевода, недостаточно средств";
@@ -21,15 +20,17 @@ public class DataReader {
                     break;
                 }
                 String[] dataSet = line.split("\\|");
-                String number = dataSet[0].trim();
+                String billNumber = dataSet[0].trim();
                 Integer balance = Integer.parseInt(dataSet[1].trim());
-                if (!number.equals("") && balance >= 0) {
-                    currentBillsMap.put(number, balance);
+                if (billNumber.matches(billRegex) && balance >= 0) {
+                    currentBillsMap.put(billNumber, balance);
                 } else if (balance < 0) {
                     throw new NegativeBalanceExeption();
+                } else if (!billNumber.matches(billRegex)) {
+                    throw new InvalidBillException();
                 }
             }
-        } catch (IOException | NegativeBalanceExeption e) {
+        } catch (IOException | NegativeBalanceExeption | InvalidBillException e) {
             System.out.println(e);
         }
     }
@@ -50,12 +51,15 @@ public class DataReader {
                         if (Integer.parseInt(dataSet[2]) < 0) { //Проверка на неотрицательную сумму перевода
                             String reportLine = LocalDateTime.now() + " " + line;
                             reportWriter.write(reportLine + negativeTransactionSumMessage + "\n");
+                            throw new NegativeTransactionSumException();
                         } else if (!currentBillsMap.containsKey(dataSet[0]) || !currentBillsMap.containsKey(dataSet[1])) { //проаерка на коректные номера счетов
                             String reportLine = LocalDateTime.now() + " " + line;
                             reportWriter.write(reportLine + invalidBillMessage + "\n");
+                            throw new InvalidBillException();
                         } else if (Integer.parseInt(dataSet[2]) > currentBillsMap.get(dataSet[0])) { //проверка на наличие средств для перевода
                             String reportLine = LocalDateTime.now() + " " + line;
                             reportWriter.write(reportLine + notEnoughMoneyMessage + "\n");
+                            throw new NotEnoughMoneyException();
                         } else {
                             currentBillsMap.replace(dataSet[0], currentBillsMap.get(dataSet[0]) - (Integer.parseInt(dataSet[2])));
                             currentBillsMap.replace(dataSet[1], currentBillsMap.get(dataSet[1]) + (Integer.parseInt(dataSet[2])));
@@ -64,7 +68,7 @@ public class DataReader {
                         }
                     }
                     reportWriter.flush();
-                } catch (IOException e) {
+                } catch (IOException | NegativeTransactionSumException | InvalidBillException | NotEnoughMoneyException e) {
                     System.out.println(e);
                 }
                     inputList[i].renameTo(new File("Bucket/" + inputList[i].getName()));
