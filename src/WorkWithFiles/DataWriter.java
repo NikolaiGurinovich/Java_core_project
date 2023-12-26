@@ -11,7 +11,7 @@ public class DataWriter {
     public static void writeCurrentBills(){
         try (FileWriter currentBillsWriter = new FileWriter("Data/Current Bills", false)){
             for (String key : DataReader.getCurrentBillsMap().keySet()){
-                String line = key +"|"+DataReader.getCurrentBillsMap().get(key);
+                String line = key +"|"+ DataReader.getCurrentBillsMap().get(key);
                 currentBillsWriter.write(line + "\n");
             }
         } catch (IOException e){
