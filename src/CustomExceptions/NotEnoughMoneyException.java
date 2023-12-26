@@ -1,4 +1,5 @@
-public class NegativeTransactionSumException extends Exception {
+package CustomExceptions;
+public class NotEnoughMoneyException extends Exception{
     @Override
     public String toString() {
         return super.toString();

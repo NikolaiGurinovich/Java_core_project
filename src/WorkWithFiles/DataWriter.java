@@ -1,8 +1,11 @@
+package WorkWithFiles;
+
+import WorkWithFiles.DataReader;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-
 public class DataWriter {
 
     public static void writeCurrentBills(){

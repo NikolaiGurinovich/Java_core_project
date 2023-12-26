@@ -1,10 +1,14 @@
+package WorkWithFiles;
+import CustomExceptions.InvalidBillException;
+import CustomExceptions.NegativeBalanceExeption;
+import CustomExceptions.NegativeTransactionSumException;
+import CustomExceptions.NotEnoughMoneyException;
 import java.io.*;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 
 public class DataReader {
     private static HashMap<String, Integer> currentBillsMap = new HashMap<>();
-
     private static String billRegex = "^[0-9]{5}-[0-9]{5}$";
     private static String negativeTransactionSumMessage = " ошибка во время перевода, неверная сумма транзакции";
     private static String invalidBillMessage = " ошибка во время перевода, неверный номер счета";
@@ -25,12 +29,20 @@ public class DataReader {
                 if (billNumber.matches(billRegex) && balance >= 0) {
                     currentBillsMap.put(billNumber, balance);
                 } else if (balance < 0) {
-                    throw new NegativeBalanceExeption();
+                    try {
+                        throw new NegativeBalanceExeption();
+                    } catch (NegativeBalanceExeption e) {
+                        System.out.println(e);
+                    }
                 } else if (!billNumber.matches(billRegex)) {
-                    throw new InvalidBillException();
+                    try {
+                        throw new InvalidBillException();
+                    } catch (InvalidBillException e) {
+                        System.out.println(e);
+                    }
                 }
             }
-        } catch (IOException | NegativeBalanceExeption | InvalidBillException e) {
+        } catch (IOException  e) {
             System.out.println(e);
         }
     }
@@ -49,17 +61,29 @@ public class DataReader {
                         }
                         String[] dataSet = line.split("\\|");
                         if (Integer.parseInt(dataSet[2]) < 0) { //Проверка на неотрицательную сумму перевода
-                            String reportLine = LocalDateTime.now() + " " + line;
+                            try {
+                                String reportLine = LocalDateTime.now() + " " + line;
                             reportWriter.write(reportLine + negativeTransactionSumMessage + "\n");
                             throw new NegativeTransactionSumException();
+                            } catch (NegativeTransactionSumException e) {
+                                System.out.println(e);
+                            }
                         } else if (!currentBillsMap.containsKey(dataSet[0]) || !currentBillsMap.containsKey(dataSet[1])) { //проаерка на коректные номера счетов
-                            String reportLine = LocalDateTime.now() + " " + line;
-                            reportWriter.write(reportLine + invalidBillMessage + "\n");
-                            throw new InvalidBillException();
+                            try {
+                                String reportLine = LocalDateTime.now() + " " + line;
+                                reportWriter.write(reportLine + invalidBillMessage + "\n");
+                                throw new InvalidBillException();
+                            } catch (InvalidBillException e) {
+                                System.out.println(e);
+                            }
                         } else if (Integer.parseInt(dataSet[2]) > currentBillsMap.get(dataSet[0])) { //проверка на наличие средств для перевода
-                            String reportLine = LocalDateTime.now() + " " + line;
-                            reportWriter.write(reportLine + notEnoughMoneyMessage + "\n");
-                            throw new NotEnoughMoneyException();
+                            try {
+                                String reportLine = LocalDateTime.now() + " " + line;
+                                reportWriter.write(reportLine + notEnoughMoneyMessage + "\n");
+                                throw new NotEnoughMoneyException();
+                            } catch (NotEnoughMoneyException e){
+                                System.out.println(e);
+                            }
                         } else {
                             currentBillsMap.replace(dataSet[0], currentBillsMap.get(dataSet[0]) - (Integer.parseInt(dataSet[2])));
                             currentBillsMap.replace(dataSet[1], currentBillsMap.get(dataSet[1]) + (Integer.parseInt(dataSet[2])));
@@ -68,7 +92,7 @@ public class DataReader {
                         }
                     }
                     reportWriter.flush();
-                } catch (IOException | NegativeTransactionSumException | InvalidBillException | NotEnoughMoneyException e) {
+                } catch (IOException e) {
                     System.out.println(e);
                 }
                     inputList[i].renameTo(new File("Bucket/" + inputList[i].getName()));
